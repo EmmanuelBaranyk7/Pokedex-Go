@@ -7,26 +7,9 @@ import (
 	"os"
 )
 
-var commands map[string]cliCommand
-
-//prevents initilization cycle
-func init() {
-    commands = map[string]cliCommand{
-		"exit": {
-			name:        "exit",
-			description: "Exit the Pokedex",
-			callback:    commandExit,
-		},
-		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback:    commandHelp,
-		},
-	}
-}
-
 func startRepl() {
 	scanner := bufio.NewScanner(os.Stdin)
+	var config config
 
 	for {
 		fmt.Print("Pokedex > : ")
@@ -46,8 +29,8 @@ func startRepl() {
 		if len(cleanedInput) == 0 {
 			fmt.Println("no user input")
 		} else {
-			if cmd, exists := commands[cleanedInput[0]]; exists {
-				err := cmd.callback()
+			if cmd, exists := getCommands()[cleanedInput[0]]; exists {
+				err := cmd.callback(&config)
 				if err != nil {
 					fmt.Printf("Error executing command: %v\n", err)
 				}
@@ -61,24 +44,40 @@ func startRepl() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
 }
 
-func commandHelp() error {
-	fmt.Println("Welcome to the Pokedex!\nUsage:\n")
-	for command, _ := range commands {
-		fmt.Printf("%s: %s\n", commands[command].name, commands[command].description)
-	}
-	return nil
-}
-
-
-func commandExit() error {
-	fmt.Println("Closing the Pokedex... Goodbye!")
-	os.Exit(0)
-	return nil
+type config struct {
+	Next		string
+	Previous	string
 }
 
 func cleanInput(text string) []string {
 	return strings.Fields(strings.ToLower(text))
+}
+
+func getCommands() map[string]cliCommand{
+    return map[string]cliCommand{
+		"exit": {
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
+		},
+		"map": {
+			name: 		"map",
+			description: "displays a list of locations",
+			callback:	commandMap,
+		},
+
+		"mapb": {
+			name: 		"mapb",
+			description: "displays previous list of locations",
+			callback:	commandMapB,
+		},
+	}
 }
