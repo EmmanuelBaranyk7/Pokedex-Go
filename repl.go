@@ -5,22 +5,16 @@ import (
 	"strings"
 	"bufio"
 	"os"
+
+	"github.com/EmmanuelBaranyk7/Pokedex-Go/internal/pokeapi"
 )
 
-func startRepl() {
+func startRepl(config *config) {
 	scanner := bufio.NewScanner(os.Stdin)
-	var config config
 
 	for {
 		fmt.Print("Pokedex > : ")
-
-		ok := scanner.Scan() 
-		if !ok {
-			if err := scanner.Err(); err != nil {
-				fmt.Printf("Error reading input: %v\n", err)
-			}
-			break
-		}
+		scanner.Scan()
 
 		input := scanner.Text()
 		cleanedInput := cleanInput(input)
@@ -30,9 +24,9 @@ func startRepl() {
 			fmt.Println("no user input")
 		} else {
 			if cmd, exists := getCommands()[cleanedInput[0]]; exists {
-				err := cmd.callback(&config)
+				err := cmd.callback(config)
 				if err != nil {
-					fmt.Printf("Error executing command: %v\n", err)
+					fmt.Println(err)
 				}
 			} else {
 				fmt.Println("Unknown command")
@@ -48,8 +42,9 @@ type cliCommand struct {
 }
 
 type config struct {
-	Next		string
-	Previous	string
+	pokeapiClient pokeapi.Client
+	Next		*string
+	Previous	*string
 }
 
 func cleanInput(text string) []string {
