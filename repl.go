@@ -7,16 +7,26 @@ import (
 	"os"
 )
 
-func startRepl() {
-	scanner := bufio.NewScanner(os.Stdin)
+var commands map[string]cliCommand
 
-	commands := map[string]cliCommand{
+//prevents initilization cycle
+func init() {
+    commands = map[string]cliCommand{
 		"exit": {
-			name: 		"exit",
-			description: "Exit the pokedex",
-			callback:	 commandExit,
+			name:        "exit",
+			description: "Exit the Pokedex",
+			callback:    commandExit,
+		},
+		"help": {
+			name:        "help",
+			description: "Displays a help message",
+			callback:    commandHelp,
 		},
 	}
+}
+
+func startRepl() {
+	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
 		fmt.Print("Pokedex > : ")
@@ -36,26 +46,15 @@ func startRepl() {
 		if len(cleanedInput) == 0 {
 			fmt.Println("no user input")
 		} else {
-			switch cleanedInput[0] {
-			case "exit":
-				if cmd, exists := commands["exit"]; exists {
-					err := cmd.callback()
-					if err != nil {
-						fmt.Printf("Error executing command %s: %v\n", cmd.name, err)
-					}
+			if cmd, exists := commands[cleanedInput[0]]; exists {
+				err := cmd.callback()
+				if err != nil {
+					fmt.Printf("Error executing command: %v\n", err)
 				}
-			case "help":
-				if cmd, exists := commands["help"]; exists {
-					err := cmd.callback()
-					if err != nil {
-						fmt.Printf("Error executing command %s: %v\n", cmd.name, err)
-					}
-				}
-			default:
+			} else {
 				fmt.Println("Unknown command")
 			}
 		}
-
 	}
 }
 
@@ -65,17 +64,17 @@ type cliCommand struct {
 	callback    func() error
 }
 
-func (c *map[string]cliCommand) commandHelp() error {
-	fmt.Println("Welcome to Pokedex!\nUsage:\n")
-	for command, _ := range c {
-		fmt.Printf("%s: %s\n", c[command].name, c[command].description)
+func commandHelp() error {
+	fmt.Println("Welcome to the Pokedex!\nUsage:\n")
+	for command, _ := range commands {
+		fmt.Printf("%s: %s\n", commands[command].name, commands[command].description)
 	}
 	return nil
 }
 
 
 func commandExit() error {
-	fmt.Println("Closeing the Pokedex... Goodbye!")
+	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
